@@ -152,7 +152,7 @@ class CartModel extends Model
                 $data_dalam .= '<tr>';
                 foreach ($gambar as $g) {
                     if ($g['id_barang'] == $cd['id_barang']) {
-                        $data_dalam .= '<td class="image"><img alt="IMAGE" class="img-responsive" src="' . $g['link_gambar'] . '"></td>';
+                        $data_dalam .= '<td class="image"><img alt="IMAGE" class="img-responsive" src="' . base_url() . '/gambar/' . $g['link_gambar'] . '"></td>';
                     }
                 }
                 $data_dalam .= '<td class="name"><a href="#">' . $cd['nama_barang'] . ' </a></td>';

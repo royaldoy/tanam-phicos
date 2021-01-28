@@ -42,6 +42,7 @@ $routes->get('/checkout', 'Front::checkout');
 $routes->get('/cart', 'Front::cart_detail');
 $routes->get('/about', 'Front::about');
 $routes->get('/delivery', 'Front::delivery');
+$routes->get('/ordersukses', 'Front::ordersukses');
 
 $routes->group('/', function ($routes) {
 	$routes->add('', 'Front::index');

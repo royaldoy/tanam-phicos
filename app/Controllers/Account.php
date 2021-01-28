@@ -123,7 +123,7 @@ class Account extends BaseController
             return redirect()->to(base_url() . '/');
         }
 
-        $a = "";
+        $a = [];
         $pemesanan = $this->UserModel->query('select * from pemesanan where id_member =' . session()->get('user_id'))->getresultarray();
 
         if (count($pemesanan) == 0) {
@@ -136,11 +136,11 @@ class Account extends BaseController
             return view('front/pages/orders_blank', $data);
         }
 
+        $z = 0;
         foreach ($pemesanan as $p) {
-            $a .= $p['id_pemesanan'];
+            $a[$z++] =  $p['id_pemesanan'];
         }
-        $b = implode(',', str_split($a));
-
+        $b = implode(',', $a);
         $data = array(
             'title' => "Phicos | Address",
             'cart' =>     $this->get_cart()['total'],

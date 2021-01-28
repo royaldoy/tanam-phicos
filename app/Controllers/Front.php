@@ -2,11 +2,14 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Controller;
 use App\Models\Front\Product_view;
 use App\Models\Front\UserModel;
 use App\Models\Front\OrderModel;
 use App\Models\Front\CartModel;
+use App\Models\Front\PemesananDetailModel;
+
 
 class Front extends BaseController
 {
@@ -17,6 +20,7 @@ class Front extends BaseController
 		$this->CartModel = new CartModel();
 		$this->UserModel = new UserModel();
 		$this->OrderModel = new OrderModel();
+		$this->PemesananDetail = new PemesananDetailModel();
 	}
 
 
@@ -80,6 +84,23 @@ class Front extends BaseController
 
 		return view('front/pages/pengiriman', $data);
 	}
+
+	public function ordersukses()
+	{
+
+		$data = array(
+			'title' => 'Order Sukses - Sapphire',
+			'cart' => 	$this->get_cart()['total'],
+			'cart_d' => 	$this->get_cart()['detail'],
+			'gambar' => 	$this->get_cart()['gambar'],
+			// 'category' => $this->product_view->query('Select * from kategori'),
+			// 'product'  => $produk->paginate(9),
+			// 'pager' => $produk->pager
+		);
+
+		return view('front/pages/order_sukses', $data);
+	}
+
 	public function delivery()
 	{
 
@@ -259,57 +280,81 @@ class Front extends BaseController
 			'cart_d' => $this->get_cart()['detail'],
 			'gambar' => $this->get_cart()['gambar'],
 			'bio' => $this->UserModel->query('select * from member where id_member =' . session()->get('user_id'))->getrowarray(),
-            'provinsi' => $this->UserModel->query('select * from wilayah_provinsi order by nama asc')->getresultarray(),
-            'kota' => $this->UserModel->query('select * from wilayah_kabupaten order by nama asc')->getresultarray(),
-            'kecamatan' => $this->UserModel->query('select * from wilayah_kecamatan order by nama asc')->getresultarray(),
+			'provinsi' => $this->UserModel->query('select * from wilayah_provinsi order by nama asc')->getresultarray(),
+			'kota' => $this->UserModel->query('select * from wilayah_kabupaten order by nama asc')->getresultarray(),
+			'kecamatan' => $this->UserModel->query('select * from wilayah_kecamatan order by nama asc')->getresultarray(),
 		);
 
 		return view('front/pages/checkout', $data);
 	}
 
-	public function checkout_save() {
+	public function checkout_save()
+	{
 		if (!$this->validate([
-            'input_user_id'  => 'required',
-            'input_alamat' => 'required',
-            'provinsi' => 'required',
-            'kota' => 'required',
-            'kecamatan' => 'required',
-            'input_kodepos' => 'required',
-            'input_phone' => 'required',
-        ])) {
-            session()->setflashdata('pesan', 'Data yang anda isi belum lengkap');
-            return redirect()->to(base_url() . '/checkout')->withInput();
+			'input_user_id'  => 'required',
+			'input_alamat' => 'required',
+			'provinsi' => 'required',
+			'kota' => 'required',
+			'kecamatan' => 'required',
+			'input_kodepos' => 'required',
+			'input_phone' => 'required',
+		])) {
+			session()->setflashdata('pesan', 'Data yang anda isi belum lengkap');
+			return redirect()->to(base_url() . '/checkout')->withInput();
 		}
 
 		$data = [
-            'id_member' => $this->request->getVar('input_user_id'),
-            'alamat' => $this->request->getVar('input_alamat'),
-            'nama_instansi' => $this->request->getVar('input_perusahaan'),
-            'id_provinsi' => $this->request->getVar('provinsi'),
-            'id_kabupaten' => $this->request->getVar('kota'),
-            'id_kecamatan' => $this->request->getVar('kecamatan'),
-            'kodepos' => $this->request->getVar('input_kodepos'),
-            'telp' => $this->request->getVar('input_phone')
+			'id_member' => $this->request->getVar('input_user_id'),
+			'alamat' => $this->request->getVar('input_alamat'),
+			'nama_instansi' => $this->request->getVar('input_perusahaan'),
+			'id_provinsi' => $this->request->getVar('provinsi'),
+			'id_kabupaten' => $this->request->getVar('kota'),
+			'id_kecamatan' => $this->request->getVar('kecamatan'),
+			'kodepos' => $this->request->getVar('input_kodepos'),
+			'telp' => $this->request->getVar('input_phone')
 		];
 
+		// $myTime = new Time('now', 'Asia/Jakarta', 'id_ID');
+		$myTime = Time::now('Asia/Jakarta', 'id_ID');
+		$myTime = date('Y-m-d H:i:s');
 		$data_pemesanan = [
 			'id_member' => $this->request->getVar('input_user_id'),
 			'notes' => $this->request->getVar('notes'),
 			'total' => $this->request->getVar('total'),
+			'tgl_pesan' => $myTime,
+			'status_pemesanan' => "Pesanan Belum Dibayar",
 			'jumlah' => $this->request->getVar('jumlah')
 		];
+
 
 		$this->UserModel->save($data);
 		$this->OrderModel->save($data_pemesanan);
 
+
 		$id_cart = $this->request->getVar('id_cart');
+		$id_p = $this->UserModel->query('Select * from pemesanan order by id_pemesanan desc limit 1')->getrowarray()['id_pemesanan'];
+		$cart_detail = $this->UserModel->query('Select * from cart_detail where id_cart =' . $id_cart)->getresultarray();
+		foreach ($cart_detail as $cd) {
+			$data_pemesanan_detail = array(
+				'id_pemesanan' => $id_p,
+				'id_barang' => $cd['id_barang'],
+				'jumlah_barang' => $cd['sub_jumlah'],
+				'harga'	   => $this->UserModel->query('Select * from barang where id_barang=' . $cd['id_barang'] . ' limit 1')->getrowarray()['harga_barang'],
+				'total' => $cd['sub_total']
+			);
+			$sisa_barang = $this->UserModel->query('Select * from barang where id_barang=' . $cd['id_barang'])->getrowarray()['stok_barang'] - $cd['sub_jumlah'];
+			// $query_pesan = 'update barang set stok_barang=' . $sisa_barang . ' where id_barang=' . $cd['id_barang'];
+			$this->PemesananDetail->query('update barang set stok_barang=' . $sisa_barang . ' where id_barang=' . $cd['id_barang']);
+			$this->PemesananDetail->save($data_pemesanan_detail);
+		}
+
 		$qd = "delete from cart_detail where id_cart= $id_cart";
 		$qd2 = "delete from cart where id_cart= $id_cart";
 
-        $this->CartModel->query($qd);
+		$this->CartModel->query($qd);
 		$this->CartModel->query($qd2);
 
-		return redirect()->to(base_url() . '/account/orders');
+		return redirect()->to(base_url() . '/ordersukses');
 	}
 
 	public function test()
