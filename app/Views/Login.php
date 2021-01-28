@@ -2,17 +2,6 @@
 <?= $this->section('content'); ?>
 <!-- Start Main Content -->
 <div class="container">
-    <!-- <div class="row">
-        <div class="col-md-12">
-            <div class="breadcrumbs">
-                <ul class="breadcrumb">
-                    <li><a href="index.html">Home</a> <span class="divider"></span></li>
-                    <li class="active">My Account</li>
-                </ul>
-            </div>
-        </div>
-
-    </div> -->
 
     <div class="row">
         <div class="col-md-12">
